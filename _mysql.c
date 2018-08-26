@@ -2002,7 +2002,16 @@ _mysql_ConnectionObject_ping(
 	int r, reconnect = -1;
 	if (!PyArg_ParseTuple(args, "|I", &reconnect)) return NULL;
 	check_connection(self);
-	if ( reconnect != -1 ) self->connection.reconnect = reconnect;
+	/* xrn: to make it work in alpine
+		https://lists.launchpad.net/maria-developers/msg10744.html
+		https://jira.mariadb.org/browse/MDEV-12950
+
+	   if ( reconnect != -1 ) self->connection.reconnect = reconnect;
+	*/
+	if (reconnect != -1) {
+		my_bool recon = reconnect;
+		mysql_options(&self->connection, MYSQL_OPT_RECONNECT, &recon);
+	}
 	Py_BEGIN_ALLOW_THREADS
 	r = mysql_ping(&(self->connection));
 	Py_END_ALLOW_THREADS
